@@ -1,0 +1,19 @@
+.password-error{
+    display: none;
+}
+
+.email-error{
+    display: none;
+}
+
+.name-error{
+    display: none;
+}
+
+.username-error{
+    display: none;
+}
+
+.address-error{
+    display: none;
+}

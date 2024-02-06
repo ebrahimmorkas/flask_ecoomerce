@@ -9,7 +9,7 @@
   </head>
   <body>
     <div class="container">
-        <form action="" method="">
+        <form action="{{ url_for('loginHandler') }}" method="POST">
             <div class="mb-3">
               <label for="username" class="form-label">Username</label>
               <input type="text" class="form-control" name="username" id="username" aria-describedby="emailHelp">

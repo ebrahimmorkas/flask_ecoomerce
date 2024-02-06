@@ -17,8 +17,9 @@ app.config['MYSQL_DB'] = "flask_ecommerce"
 mysql = MySQL(app)
 
 # Configuration for sessions
-app.config['SESSION_TYPE'] = 'redis'
-app.config['SESSION_REDIS'] = redis.Redis(host='localhost', port=6379)
+app.config['SESSION_TYPE'] = 'filesystem'
+# app.config['SESSION_TYPE'] = 'redis'
+# app.config['SESSION_REDIS'] = redis.Redis(host='localhost', port=6379)
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=5)
 Session(app)
@@ -33,22 +34,51 @@ def home():
 # Creating the route for login
 @app.route('/login')
 def login():
-    # Checking whether the form has been submitted with post request and if not redirect the user to login page
-    if request.method == 'POST':
-        # checking whether the form has been submitted with data
-        if request.form:
-            data = request.form
-            username = data['username']
-            password = data['password']
+    if session.get('login'):
+        return redirect(url_for('index.html'))
     else:
         return render_template('loginAndSignup/login.html')
 
+# Creating the route that will handle the login form
+@app.route('/loginHandler', methods=['POST'])
+def loginHandler():
+    # Check whether the form has been submitted via POST request
+    if request.method == 'POST':
+        data = request.form
+        username = data['username']
+        password = data['password']
+        if username == "" or password == "":
+            return redirect(url_for('login', data="Incomplete data"))
+        else:
+            cur = mysql.connection.cursor()
+            select_query = "SELECT * FROM users WHERE username = %s"
+            values = (username,)
+            cur.execute(select_query, values)
+            results = cur.fetchall()
+            # Checking whether username exists or not
+            if results:
+                hashedPassword = results[0][4]
+                print(f"hiii{hashedPassword}")
+                decryptedPassword = bcrypt.check_password_hash(hashedPassword, password)
+                print(decryptedPassword)
+
+                # Checking whether the entered password is correct or not
+                if decryptedPassword:
+                    session['login'] = True
+                    session['name'] = results[0][1]
+                    return redirect(url_for('home'))
+                else:
+                    return redirect(url_for('login', data="Username or password is wrong"))
+            else:
+                return redirect(url_for('login', data="Username or password is wrong"))
+    else:
+        return redirect(url_for('login', data="Form not submited"))
 
 # Creating the route that will display the signup form
 @app.route('/signup')
 def signup():
     # Check whether session is not if session is not set then only proceed to signup
-    if session.get('name'):
+    if session.get('login'):
         return redirect(url_for('index.html'))
     else:
         return render_template('loginAndSignup/signup.html')
@@ -99,9 +129,9 @@ def signupHandler():
             else:
                 return redirect(url_for('signup', data="Form has not been filled"))
         else:
-            data = request.form
-            print(data['name'])
-            print(data['username'])
+            # data = request.form
+            # print(data['name'])
+            # print(data['username'])
             return redirect(url_for('signup', data="Form not submitted"))
 if __name__ == '__main__':
     app.run(debug=True)
