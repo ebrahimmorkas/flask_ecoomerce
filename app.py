@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
 from flask_mysqldb import MySQL
 import os, redis
 from flask_session import Session
 from datetime import timedelta
 from flask_bcrypt import Bcrypt
+import products
 app = Flask(__name__)
 
 # Configuration for hashing
@@ -297,6 +298,44 @@ def addProductHandler():
             return redirect(url_for('addProduct', msg="Form does not contain data"))
     else:
         return redirect(url_for('addProduct', msg="Form not submitted"))
+
+# Route that will Show the page to update the product
+@app.route('/product/updateProduct')
+def updateProduct():
+    return render_template('products/updateProduct.html')
+
+# Route that will handle the searching of product in the updateProduct Form
+@app.route('/product/searchProduct', methods=['POST'])
+def searchProduct():
+    print("Request recieved")
+    productID = request.json['productID']
+    select_query = 'SELECT * FROM product WHERE id = %s'
+    values = (productID,)
+    cur = mysql.connection.cursor()
+    cur.execute(select_query, values)
+    data = cur.fetchall()
+    # print(data)
+    if data:
+        fetchedImage = data[0][6]
+        image = send_file(fetchedImage, mimetype='image/*')
+        results = {
+            "productName": data[0][1],
+            "productCategory": data[0][2],
+            "productPrice": data[0][3],
+            "productDescription": data[0][4],
+            "productQuantity": data[0][5],
+            "productImageFilename": data[0][7],
+            "productZipFilename": data[0][9]
+        }
+        return jsonify(results)
+    else:
+        error = {"msg": "The given ID does not exist"}
+        return jsonify(error)
+
+# Route that will display the image that has been uploaded for the product
+@app.route('/product/viewImage/<int:id>')
+def viewImage():
+    pass
 
 # Route that will handle logout functionality
 @app.route('/logout')

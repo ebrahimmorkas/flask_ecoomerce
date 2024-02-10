@@ -7,7 +7,7 @@
 	<meta name="author" content="Kamran Mubarik">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<!-- Title -->
-	<title>E-Commerce Online Shop</title>
+	<title>Update Product</title>
 	<!-- Style Sheet -->
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
 	<!-- Javascript -->
@@ -142,17 +142,30 @@
 					</ul>
 				</div>
 				<div class="account-detail">
-					<h2>Add Product</h2>
+					<h2>Update Product</h2>
 					<div class="billing-detail">
-						<form class="checkout-form" method="POST" action="{{ url_for('addProductHandler') }}" enctype="multipart/form-data">
+						<form class="checkout-form" method="POST" action="{{ url_for('addProductHandler') }}"
+							enctype="multipart/form-data">
+							<div class="form-inline">
+								<div class="form-group text-center">
+									<!-- <label></label> -->
+									<input type="text" id="search" name="productId" required placeholder="id">
+
+								</div>
+								<div class="form-group">
+									<input type="button" id="searchBtn" name="update" value="Search Product"
+										style="background-color: #F0E68C">
+								</div>
+							</div>
+							<div id="errorDiv"></div>
 							<div class="form-inline">
 								<div class="form-group">
 									<label>Product Name</label>
-									<input type="text" id="fname" name="productName" required>
+									<input type="text" id="productName" name="productName" required>
 								</div>
 								<div class="form-group">
 									<label>Price (INR)</label>
-									<input type="text" id="lname" name="productPrice" required>
+									<input type="text" id="productPrice" name="productPrice" required>
 								</div>
 							</div>
 							<div class="form-group">
@@ -161,36 +174,40 @@
 							<div class="form-inline">
 								<div class="form-group">
 									<label>Category</label>
-									<select id="country" name="productCategory">
+									<select id="productCategory" name="productCategory">
 										<option selected>---Select a Category---</option>
-                                        <option value="Food">Games</option>
+										<option value="Food">Games</option>
 									</select>
 								</div>
 								<div class="form-group">
 									<div mb-3>
 										<label for="formFileLg" class="form-label">Upload photo of product</label>
-										<input class="form-control form-control-lg" id="formFileLg" type="file" name="productImage">
+										<input class="form-control form-control-lg" id="productImage" type="file"
+											name="productImage">
+											<a href="/product/viewImage/{{id}}">View</a>
 									</div>
 								</div>
 							</div>
 							<div class="form-inline">
 								<div class="form-group">
 									<label>Enter Quantity</label>
-									<input type="text" id="fname" name="productQuantity">
+									<input type="text" id="productQuantity" name="productQuantity">
 								</div>
 								<div class="form-group">
 									<div mb-3>
 										<label for="formFileLg" class="form-label">Upload zip for different
 											views</label>
-										<input class="form-control form-control-lg" id="formFileLg" type="file" name="productZip">
+										<input class="form-control form-control-lg" id="productZip" type="file"
+											name="productZip">
 									</div>
 								</div>
 							</div>
 							<div class="form-group">
 								<label>Description</label>
-								<textarea style="resize:none" id="productDescription" name="productDescription" rows="3"></textarea>
+								<textarea style="resize:none" id="productDescription" name="productDescription"
+									rows="3"></textarea>
 							</div>
-							<!-- <div class="form-inline">					
+							<!-- <div class="form-inline">
 								<div class="form-group">
 									<label>Tel</label>
 									<input type="text" id="tel" name="tel" minlength="11" maxlength="11" value="555-XXXXXXX">
@@ -202,7 +219,7 @@
 							</div> -->
 							<div class="form-group">
 								<label></label>
-								<input type="submit" id="update" name="update" value="Add Product">
+								<input type="submit" id="update" name="update" value="Update Product">
 							</div>
 						</form>
 					</div>
@@ -247,9 +264,12 @@
 					<div class="widget-content">
 						<div class="follow">
 							<ul>
-								<li><a href="#"><img src="{{ url_for('static', filename='img/icons/facebook.png') }}"></a></li>
-								<li><a href="#"><img src="{{ url_for('static', filename='img/icons/twitter.png') }}"></a></li>
-								<li><a href="#"><img src="{{ url_for('static', filename='img/icons/instagram.png') }}"></a></li>
+								<li><a href="#"><img
+											src="{{ url_for('static', filename='img/icons/facebook.png') }}"></a></li>
+								<li><a href="#"><img
+											src="{{ url_for('static', filename='img/icons/twitter.png') }}"></a></li>
+								<li><a href="#"><img
+											src="{{ url_for('static', filename='img/icons/instagram.png') }}"></a></li>
 							</ul>
 						</div>
 					</div>
@@ -280,7 +300,7 @@
 			</div> <!-- Footer Bar -->
 		</div>
 	</footer> <!-- Footer Area -->
-
+	<script src="{{ url_for('static', filename='js/searchProduct.js') }}"></script>
 </body>
 
 </html>
