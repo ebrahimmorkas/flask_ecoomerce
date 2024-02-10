@@ -26,7 +26,7 @@ Session(app)
 
 @app.route('/')
 def home():
-    if session.get('name'):
+    if session.get('login'):
         return render_template('index.html')
     else:
         return redirect(url_for('login'))
@@ -35,7 +35,7 @@ def home():
 @app.route('/login')
 def login():
     if session.get('login'):
-        return redirect(url_for('index.html'))
+        return redirect(url_for('home'))
     else:
         return render_template('loginAndSignup/login.html')
 
@@ -88,7 +88,7 @@ def signup():
 def signupHandler():
     # Check whether session is not if session is not set then only proceed to signup
     if session.get('name'):
-        return redirect(url_for('index.html'))
+        return redirect(url_for('home'))
     else:
         # check whether the form is submitted via post request
         if request.method == 'POST':
@@ -133,6 +133,176 @@ def signupHandler():
             # print(data['name'])
             # print(data['username'])
             return redirect(url_for('signup', data="Form not submitted"))
+
+# Creating the route that will display the vendor login page
+@app.route('/vendorLogin')
+def vendorLogin():
+    if session.get('vendorLogin'):
+        # User already logged in
+        print("Already Logged in")
+        return redirect(url_for('home'))
+    else:
+        # User not logged in
+        print("not logged in")
+        return render_template('vendor/login.html')
+
+# Creating the route that will display the vendor signup page
+@app.route('/vendorSignup')
+def vendorSignup():
+    if session.get('vendorLogin'):
+        return redirect(url_for('vendorHome'))
+    elif session.get('login'):
+        return redirect(url_for('home'))
+    else:
+        return render_template('vendor/signup.html')
+
+# Creating the route that will handle the vendor signup functionality
+@app.route('/vendorSignupHandler', methods=['POST'])
+def vendorSignupHandler():
+    # Check whether session is not if session is not set then only proceed to signup
+    if session.get('name'):
+        return redirect(url_for('home'))
+    else:
+        # check whether the form is submitted via post request
+        if request.method == 'POST':
+            # check whether the form contains data or not
+            if request.form:
+                data = request.form
+                name = data['name']
+                username = data['username']
+                password = data['password']
+                address = data['address']
+                email = data['email']
+                phone = data['phoneNumber']
+                print(phone)
+
+                if name == "" or username == "" or password == "" or address == "" or email == "" or phone == "":
+                    return redirect(url_for('signup', data="Please fill missing data"))
+                else:
+                    # Checking whether address is not greater than 100 and username is not greater than 45 and email is not greater than 45
+                    if len(name) >= 45 or len(username) >= 45 or len(address) >= 100 or len(email) >= 45 or len(phone) != 10:
+                        return redirect('signup', data="Too Long data has been entered")
+                    else:
+                        # Checking whether username or email exists in database or not
+                        cur = mysql.connection.cursor()
+                        select_query = "SELECT * FROM vendor WHERE email = %s OR phone = %s OR username = %s"
+                        vendor_signup_values = (email, username, phone)
+                        cur.execute(select_query, vendor_signup_values)
+                        data = cur.fetchall()
+                        # If size is zero that means data does not exists and proceed with inserting data
+                        if len(data) == 0:
+                            hashed_password = bcrypt.generate_password_hash(password,
+                                                                            rounds=int(os.environ.get('ROUNDS')))
+                            insert_query = "INSERT INTO vendor (username, password, name, email, phone, address) VALUES (%s, %s, %s, %s, %s, %s)"
+                            values = (username, hashed_password, name, email, phone, address)
+                            cur.execute(insert_query, values)
+                            mysql.connection.commit()
+                            cur.close()
+                            return redirect(url_for('vendorLogin'))
+                        else:
+                            # Data already exists
+                            cur.close()
+                            return redirect(url_for('vendorSignup', data="The data you entered already exists"))
+            else:
+                return redirect(url_for('vendorSignup', data="Form has not been filled"))
+        else:
+            # data = request.form
+            # print(data['name'])
+            # print(data['username'])
+            return redirect(url_for('vendorSignup', data="Form not submitted"))
+
+# Route that will handle the vendor login functionality
+@app.route('/vendorLoginHandler', methods=['POST'])
+def vendorLoginHandler():
+    print("form received")
+    # Check whether the form has been submitted via POST request
+    if request.method == 'POST':
+        data = request.form
+        username = data['username']
+        password = data['password']
+        if username == "" or password == "":
+            return redirect(url_for('vendorLogin', data="Incomplete data"))
+        else:
+            cur = mysql.connection.cursor()
+            select_query = "SELECT * FROM vendor WHERE username = %s"
+            values = (username,)
+            cur.execute(select_query, values)
+            results = cur.fetchall()
+            # Checking whether username exists or not
+            if results:
+                hashedPassword = results[0][2]
+                decryptedPassword = bcrypt.check_password_hash(hashedPassword, password)
+
+                # Checking whether the entered password is correct or not
+                if decryptedPassword:
+                    session['vendorLogin'] = True
+                    session['name'] = results[0][3]
+                    return redirect(url_for('home'))
+                else:
+                    return redirect(url_for('vendorLogin', data="Username or password is wrong"))
+            else:
+                return redirect(url_for('vendorLogin', data="Username or password is wrong"))
+    else:
+        return redirect(url_for('vendorLogin', data="Form not submited"))
+
+# Route that will show the page to add the product
+@app.route('/product/addProduct')
+def addProduct():
+        return render_template('products/addProduct.html')
+
+# Route that will handle the addition of product
+@app.route('/product/addProductHandler', methods=['POST'])
+def addProductHandler():
+    if request.method == 'POST':
+        if request.form and request.files:
+            ALLOWED_EXTENSION = {'jpeg', 'jpg', 'png'}
+            ALLOWED_EXTENSION_FOR_ZIP = {'zip', 'rar'}
+
+            # Function that will check the extension of productImage
+            def check_file_extension(passedFilename):
+                return '.' in passedFilename and passedFilename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSION
+
+            # Function that will check the extension of zip i.e. productZip
+            def check_zip_extension(passedFilename):
+                return '.' in passedFilename and passedFilename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSION_FOR_ZIP
+
+            data = request.form
+            productName = data['productName']
+            productPrice = data['productPrice']
+            productCategory = data['productCategory']
+            productQuantity = data['productQuantity']
+            productDescription = data['productDescription']
+            image = request.files['productImage']
+            productImageFilename = image.filename
+            productImage = image.read()
+            zipImage = request.files['productZip']
+            productZipFilename = zipImage.filename
+            productZip = zipImage.read()
+
+            if productName == "" or productPrice == "" or productCategory == "" or productQuantity == "" or productDescription == "" or productImageFilename == "" or productZipFilename == "":
+                return redirect(url_for('addProduct', msg="Missing Form Data"))
+            else:
+                # Check whether the product Image and Zip file is in correct format
+                if check_zip_extension(productZipFilename) and check_file_extension(productImageFilename):
+                    cur = mysql.connection.cursor()
+                    insert_query = "INSERT INTO product (name, category, price, description, quantity, image, imagefilename, zip, zipfilename) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                    values = (productName, productCategory, productPrice, productDescription, productQuantity, productImage, productImageFilename, productZip, productZipFilename)
+                    cur.execute(insert_query, values)
+                    mysql.connection.commit()
+                    cur.close()
+                    return redirect(url_for('addProduct', msg="Product added successfully"))
+                else:
+                    return redirect(url_for('addProduct', msg="Image or Zip file may ot be in proper extension"))
+        else:
+            return redirect(url_for('addProduct', msg="Form does not contain data"))
+    else:
+        return redirect(url_for('addProduct', msg="Form not submitted"))
+
+# Route that will handle logout functionality
+@app.route('/logout')
+def logoutHandler():
+    session.clear()
+    return redirect(url_for('login'))
 if __name__ == '__main__':
     app.run(debug=True)
 

@@ -45,8 +45,12 @@
 						<div class="dropdown-menu">
 							<ul>
 								<li><a href="account.html">My Account</a></li>
-								<li><a href="orders.html">My Orders</a></li>
-                                <li><a href="orders.html">Logout</a></li>
+								{% if session.get('vendorLogin'): %}
+									<li><a href="orders.html">My Products</a></li>
+								{% else: %}
+									<li><a href="orders.html">My Orders</a></li>
+								{% endif %}
+                                <li><a href="{{ url_for('logoutHandler') }}">Logout</a></li>
 							</ul>
 						</div>
 					</div>
