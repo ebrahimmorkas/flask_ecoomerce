@@ -141,87 +141,36 @@
 						<li><a href="{{ url_for('deleteProduct') }}">Delete Product <span>></span></a></li>
 					</ul>
 				</div>
-				<div class="account-detail">
-					<h2>Update Product</h2>
-					<div class="billing-detail">
-						<form class="checkout-form" method="POST" action="{{ url_for('addProductHandler') }}"
-							enctype="multipart/form-data">
-							<div class="form-inline">
-								<div class="form-group text-center">
-									<!-- <label></label> -->
-									<input type="text" id="search" name="productId" required placeholder="id">
-
-								</div>
-								<div class="form-group">
-									<input type="button" id="searchBtn" name="update" value="Search Product"
-										style="background-color: #F0E68C">
-								</div>
-							</div>
-							<div id="errorDiv"></div>
-							<div class="form-inline">
-								<div class="form-group">
-									<label>Product Name</label>
-									<input type="text" id="productName" name="productName" required>
-								</div>
-								<div class="form-group">
-									<label>Price (INR)</label>
-									<input type="text" id="productPrice" name="productPrice" required>
-								</div>
-							</div>
-							<div class="form-group">
-
-							</div>
-							<div class="form-inline">
-								<div class="form-group">
-									<label>Category</label>
-									<select id="productCategory" name="productCategory">
-										<option selected>---Select a Category---</option>
-										<option value="Food">Games</option>
-									</select>
-								</div>
-								<div class="form-group">
-									<div mb-3>
-										<label for="formFileLg" class="form-label">Upload photo of product</label>
-										<input class="form-control form-control-lg" id="productImage" type="file"
-											name="productImage">
-											<a href="/product/viewImage/{{id}}">View</a>
-									</div>
-								</div>
-							</div>
-							<div class="form-inline">
-								<div class="form-group">
-									<label>Enter Quantity</label>
-									<input type="text" id="productQuantity" name="productQuantity">
-								</div>
-								<div class="form-group">
-									<div mb-3>
-										<label for="formFileLg" class="form-label">Upload zip for different
-											views</label>
-										<input class="form-control form-control-lg" id="productZip" type="file"
-											name="productZip">
-									</div>
-								</div>
-							</div>
-							<div class="form-group">
-								<label>Description</label>
-								<textarea style="resize:none" id="productDescription" name="productDescription"
-									rows="3"></textarea>
-							</div>
-							<!-- <div class="form-inline">
-								<div class="form-group">
-									<label>Tel</label>
-									<input type="text" id="tel" name="tel" minlength="11" maxlength="11" value="555-XXXXXXX">
-								</div>
-								<div class="form-group">
-									<label>Mobile</label>
-									<input type="text" id="mobile" name="mobile" minlength="11" maxlength="11" value="555-XXXXXXX">
-								</div>
-							</div> -->
-							<div class="form-group">
-								<label></label>
-								<input type="submit" id="update" name="update" value="Update Product">
-							</div>
-						</form>
+				<div class="account-detail">					
+					<h2>My Products</h2>
+					<div class="order-detail">
+						<table>
+							<thead>
+								<tr>
+									<!-- <th>Sr No.</th> -->
+									<th>Name</th>
+									<th>Category</th>
+									<th>Amount</th>
+									<th>Quantity</th>
+									<th>Image</th>
+									<th>Update</th>
+									<th>Delete</th>									
+								</tr>
+							</thead>
+							<tbody id="table-body">
+                                {% for item in data %}
+								<tr id="{{ item[0] }}">
+									<td>{{ item[1] }}</td>
+									<td>{{ item[2] }}</td>
+									<td>{{ item[3] }}</td>
+									<td>{{ item[5] }}</td>
+									<td><button type="button">View</button></td>
+									<td><button type="button">Update</button></td>
+									<td><button type="button" id="deleteBtn" onclick="deleteProduct({{ item[0] }})">Delete</button></td>
+								</tr>	
+                                {% endfor %}
+							</tbody>
+						</table>
 					</div>
 				</div>
 			</div>
@@ -301,6 +250,7 @@
 		</div>
 	</footer> <!-- Footer Area -->
 	<script src="{{ url_for('static', filename='js/searchProduct.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/deleteProduct.js') }}"></script>
 </body>
 
 </html>

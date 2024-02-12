@@ -27,7 +27,7 @@ Session(app)
 
 @app.route('/')
 def home():
-    if session.get('login'):
+    if session.get('login') or session.get('vendorLogin'):
         return render_template('index.html')
     else:
         return redirect(url_for('login'))
@@ -161,7 +161,7 @@ def vendorSignup():
 @app.route('/vendorSignupHandler', methods=['POST'])
 def vendorSignupHandler():
     # Check whether session is not if session is not set then only proceed to signup
-    if session.get('name'):
+    if session.get('vendorLogin'):
         return redirect(url_for('home'))
     else:
         # check whether the form is submitted via post request
@@ -178,11 +178,11 @@ def vendorSignupHandler():
                 print(phone)
 
                 if name == "" or username == "" or password == "" or address == "" or email == "" or phone == "":
-                    return redirect(url_for('signup', data="Please fill missing data"))
+                    return redirect(url_for('vendorSignup', data="Please fill missing data"))
                 else:
                     # Checking whether address is not greater than 100 and username is not greater than 45 and email is not greater than 45
                     if len(name) >= 45 or len(username) >= 45 or len(address) >= 100 or len(email) >= 45 or len(phone) != 10:
-                        return redirect('signup', data="Too Long data has been entered")
+                        return redirect('veendorSignup', data="Too Long data has been entered")
                     else:
                         # Checking whether username or email exists in database or not
                         cur = mysql.connection.cursor()
@@ -238,6 +238,8 @@ def vendorLoginHandler():
                 if decryptedPassword:
                     session['vendorLogin'] = True
                     session['name'] = results[0][3]
+                    session['vendorID'] = results[0][0]
+                    print(results[0][0])
                     return redirect(url_for('home'))
                 else:
                     return redirect(url_for('vendorLogin', data="Username or password is wrong"))
@@ -249,88 +251,159 @@ def vendorLoginHandler():
 # Route that will show the page to add the product
 @app.route('/product/addProduct')
 def addProduct():
+    if session.get('vendorLogin'):
         return render_template('products/addProduct.html')
+    else:
+        return redirect(url_for('vendorLogin'))
 
 # Route that will handle the addition of product
 @app.route('/product/addProductHandler', methods=['POST'])
 def addProductHandler():
-    if request.method == 'POST':
-        if request.form and request.files:
-            ALLOWED_EXTENSION = {'jpeg', 'jpg', 'png'}
-            ALLOWED_EXTENSION_FOR_ZIP = {'zip', 'rar'}
+    if session.get('vendorLogin'):
+        if request.method == 'POST':
+            if request.form and request.files:
+                ALLOWED_EXTENSION = {'jpeg', 'jpg', 'png'}
+                ALLOWED_EXTENSION_FOR_ZIP = {'zip', 'rar'}
 
-            # Function that will check the extension of productImage
-            def check_file_extension(passedFilename):
-                return '.' in passedFilename and passedFilename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSION
+                # Function that will check the extension of productImage
+                def check_file_extension(passedFilename):
+                    return '.' in passedFilename and passedFilename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSION
 
-            # Function that will check the extension of zip i.e. productZip
-            def check_zip_extension(passedFilename):
-                return '.' in passedFilename and passedFilename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSION_FOR_ZIP
+                # Function that will check the extension of zip i.e. productZip
+                def check_zip_extension(passedFilename):
+                    return '.' in passedFilename and passedFilename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSION_FOR_ZIP
 
-            data = request.form
-            productName = data['productName']
-            productPrice = data['productPrice']
-            productCategory = data['productCategory']
-            productQuantity = data['productQuantity']
-            productDescription = data['productDescription']
-            image = request.files['productImage']
-            productImageFilename = image.filename
-            productImage = image.read()
-            zipImage = request.files['productZip']
-            productZipFilename = zipImage.filename
-            productZip = zipImage.read()
+                data = request.form
+                productName = data['productName']
+                productPrice = data['productPrice']
+                productCategory = data['productCategory']
+                productQuantity = data['productQuantity']
+                productDescription = data['productDescription']
+                image = request.files['productImage']
+                productImageFilename = image.filename
+                productImage = image.read()
+                zipImage = request.files['productZip']
+                productZipFilename = zipImage.filename
+                productZip = zipImage.read()
+                vendorID = session['vendorID']
+                print("HI")
+                print(vendorID)
 
-            if productName == "" or productPrice == "" or productCategory == "" or productQuantity == "" or productDescription == "" or productImageFilename == "" or productZipFilename == "":
-                return redirect(url_for('addProduct', msg="Missing Form Data"))
-            else:
-                # Check whether the product Image and Zip file is in correct format
-                if check_zip_extension(productZipFilename) and check_file_extension(productImageFilename):
-                    cur = mysql.connection.cursor()
-                    insert_query = "INSERT INTO product (name, category, price, description, quantity, image, imagefilename, zip, zipfilename) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                    values = (productName, productCategory, productPrice, productDescription, productQuantity, productImage, productImageFilename, productZip, productZipFilename)
-                    cur.execute(insert_query, values)
-                    mysql.connection.commit()
-                    cur.close()
-                    return redirect(url_for('addProduct', msg="Product added successfully"))
+                if productName == "" or productPrice == "" or productCategory == "" or productQuantity == "" or productDescription == "" or productImageFilename == "" or productZipFilename == "":
+                    return redirect(url_for('addProduct', msg="Missing Form Data"))
                 else:
-                    return redirect(url_for('addProduct', msg="Image or Zip file may ot be in proper extension"))
+                    # Check whether the product Image and Zip file is in correct format
+                    if check_zip_extension(productZipFilename) and check_file_extension(productImageFilename):
+                        cur = mysql.connection.cursor()
+                        insert_query = "INSERT INTO product (name, category, price, description, quantity, image, imagefilename, zip, zipfilename, vendorid) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                        values = (productName, productCategory, productPrice, productDescription, productQuantity, productImage, productImageFilename, productZip, productZipFilename, vendorID)
+                        cur.execute(insert_query, values)
+                        mysql.connection.commit()
+                        cur.close()
+                        return redirect(url_for('addProduct', msg="Product added successfully"))
+                    else:
+                        return redirect(url_for('addProduct', msg="Image or Zip file may ot be in proper extension"))
+            else:
+                return redirect(url_for('addProduct', msg="Form does not contain data"))
         else:
-            return redirect(url_for('addProduct', msg="Form does not contain data"))
+            return redirect(url_for('addProduct', msg="Form not submitted"))
     else:
-        return redirect(url_for('addProduct', msg="Form not submitted"))
-
+        return redirect(url_for('vendorLogin'))
 # Route that will Show the page to update the product
 @app.route('/product/updateProduct')
 def updateProduct():
-    return render_template('products/updateProduct.html')
+    if session.get('vendorLogin'):
+        return render_template('products/updateProduct.html')
+    else:
+        return redirect(url_for('vendorLogin'))
 
 # Route that will handle the searching of product in the updateProduct Form
 @app.route('/product/searchProduct', methods=['POST'])
 def searchProduct():
-    print("Request recieved")
-    productID = request.json['productID']
-    select_query = 'SELECT * FROM product WHERE id = %s'
-    values = (productID,)
-    cur = mysql.connection.cursor()
-    cur.execute(select_query, values)
-    data = cur.fetchall()
-    # print(data)
-    if data:
-        fetchedImage = data[0][6]
-        image = send_file(fetchedImage, mimetype='image/*')
-        results = {
-            "productName": data[0][1],
-            "productCategory": data[0][2],
-            "productPrice": data[0][3],
-            "productDescription": data[0][4],
-            "productQuantity": data[0][5],
-            "productImageFilename": data[0][7],
-            "productZipFilename": data[0][9]
-        }
-        return jsonify(results)
+    if session.get('vendorLogin'):
+        if request.method == 'POST':
+            # print("Request recieved")
+            productID = request.json['productID']
+            select_query = 'SELECT * FROM product WHERE id = %s'
+            values = (productID,)
+            cur = mysql.connection.cursor()
+            cur.execute(select_query, values)
+            data = cur.fetchall()
+            # print(data)
+            if data:
+                fetchedImage = data[0][6]
+                image = send_file(fetchedImage, mimetype='image/*')
+                results = {
+                    "productName": data[0][1],
+                    "productCategory": data[0][2],
+                    "productPrice": data[0][3],
+                    "productDescription": data[0][4],
+                    "productQuantity": data[0][5],
+                    "productImageFilename": data[0][7],
+                    "productZipFilename": data[0][9]
+                }
+                return jsonify(results)
+            else:
+                error = {"msg": "The given ID does not exist"}
+                return jsonify(error)
+        else:
+            return redirect(url_for('updateProduct'))
     else:
-        error = {"msg": "The given ID does not exist"}
-        return jsonify(error)
+        return redirect(url_for('vendorLogin'))
+
+# Route that is going to show the vendor that are being sold
+@app.route('/product/soldProduct')
+def soldProducts():
+    return "Sold Products"
+
+# Route that i going to delete the product
+@app.route('/product/deleteProduct', methods=['POST'])
+def deleteProduct():
+    print("Request Received")
+    if session.get('vendorLogin'):
+        if request.method == "POST":
+            productId = request.json['productID']
+            cur = mysql.connection.cursor()
+            select_query = 'SELECT * FROM product WHERE id = %s'
+            values = (productId,)
+            cur.execute(select_query, values)
+            data = cur.fetchall()
+            if data:
+                delete_query = "DELETE FROM product WHERE id = %s"
+                delete_values = (productId,)
+                cur.execute(delete_query, delete_values)
+                mysql.connection.commit()
+                vendorID = session['vendorID']
+                # Again sending the ID of the deleted product to remove that row from the table
+                dataToBeSent = {'product': productId}
+                return jsonify(dataToBeSent)
+            else:
+                # No data found
+                dataToBeSent = {"msg": "No data Found"}
+                return jsonify(dataToBeSent)
+        else:
+            return redirect(url_for('displayProducts'))
+    else:
+        return redirect(url_for('vendorLogin'))
+
+# Route that is going to display all the products
+@app.route('/product/myProducts')
+def displayProducts():
+    if session.get('vendorLogin'):
+        vendorID = session['vendorID']
+        select_query = "SELECT * FROM product WHERE vendorid = %s"
+        values = (vendorID,)
+        cur = mysql.connection.cursor()
+        cur.execute(select_query, values)
+        data = cur.fetchall()
+        cur.close()
+        # print(data[0][1])
+        # print(data[0][2])
+        # print(data[0][3])
+        # print(data[0][5])
+        return render_template('products/allProducts.html', data=data)
+    else:
+        return redirect(url_for('vendorLogin'))
 
 # Route that will display the image that has been uploaded for the product
 @app.route('/product/viewImage/<int:id>')
