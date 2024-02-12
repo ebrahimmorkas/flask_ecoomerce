@@ -13,6 +13,7 @@
 		<!-- Javascript -->	
 		<script type="text/javascript" src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/bxslider/4.2.12/jquery.bxslider.css">
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">
   		<script src="https://cdn.jsdelivr.net/bxslider/4.2.12/jquery.bxslider.min.js"></script>
   		<script>
 		    $(document).ready(function(){
@@ -169,17 +170,24 @@
 					<h3>Most selling product for the month</h3>
 				</div>
 				<div class="product-content">
+					{% for product in data: %}
 					<div class="product">
 						<a href="product.html">
 							<img src="{{ url_for('static', filename='img/product/img1.jpg') }}">
 						</a>
 						<div class="product-detail">
-							<h3>Men's / Watches</h3>
-							<h2>Gray Color Men's Watch</h2>
-							<a href="#">Add to Cart</a>
-							<p>Rs.4500/-</p>
+							<h3>{{ product[1] }}</h3>
+							<h2>{{ product[4] }}</h2>
+							{% if session.get('vendorLogin'): %}
+								<a>View My Product</a>
+							{% else: %}
+								<a onclick="addToCart({{ product[0] }})">Add to Cart</a>
+								<p>{{ product[3] }}</p>
+								<center><a href="">Buy Now</a></center>
+							{% endif %}
 						</div>						
 					</div>
+					{% endfor %}
 					<div class="product">
 						<a href="product.html">
 							<img src="img/product/img2.jpg">
@@ -393,7 +401,20 @@
 			</div> <!-- Footer Bar -->
 		</div>
 	</footer> <!-- Footer Area -->
+	<!-- Button to trigger the modal -->
+<button id="modalBtn" onclick="openModal()">Open Modal</button>
 
+<!-- The modal -->
+<div id="myModal" class="overlay">
+    <div class="popup-content">
+        <!-- Modal content -->
+        <span onclick="closeModal()" style="cursor: pointer; float: right;">&times;</span>
+        <h2>Cart</h2>
+        <p>Product Successfully added to cart</p>
+    </div>
+</div>
+	<script src="{{ url_for('static', filename='js/addToCart.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
 </body>
 
 </html>

@@ -28,7 +28,22 @@ Session(app)
 @app.route('/')
 def home():
     if session.get('login') or session.get('vendorLogin'):
-        return render_template('index.html')
+        if session.get('vendorLogin'):
+            vendorID = session['vendorID']
+            select_query = "SELECT * FROM product WHERE vendorid = %s"
+            values = (vendorID,)
+            cur = mysql.connection.cursor()
+            cur.execute(select_query, values)
+            data = cur.fetchall()
+            cur.close()
+            return render_template('index.html', data=data)
+        else:
+            select_query = "SELECT * FROM product"
+            cur = mysql.connection.cursor()
+            cur.execute(select_query)
+            data = cur.fetchall()
+            cur.close()
+            return render_template('index.html', data=data)
     else:
         return redirect(url_for('login'))
 
@@ -67,6 +82,7 @@ def loginHandler():
                 if decryptedPassword:
                     session['login'] = True
                     session['name'] = results[0][1]
+                    session['buyerID'] = results[0][0]
                     return redirect(url_for('home'))
                 else:
                     return redirect(url_for('login', data="Username or password is wrong"))
@@ -409,6 +425,25 @@ def displayProducts():
 @app.route('/product/viewImage/<int:id>')
 def viewImage():
     pass
+
+# Route that will handle the addition of item to cart
+@app.route('/addToCart', methods=['POST'])
+def cart():
+    if session.get('login'):
+        if request.method == 'POST':
+            productID = request.json['productID']
+            buyerID = session['buyerID']
+            insert_query = "INSERT INTO cart (productid, buyerid) VALUES (%s, %s)"
+            values = (productID, buyerID)
+            cur = mysql.connection.cursor()
+            cur.execute(insert_query, values)
+            mysql.connection.commit()
+            cur.close()
+            return jsonify({"msg": "Product added to cart"})
+        else:
+            return jsonify({"msg": "Something went wrong"})
+    else:
+        return redirect(url_for('login'))
 
 # Route that will handle logout functionality
 @app.route('/logout')
