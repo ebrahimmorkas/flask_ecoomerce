@@ -173,7 +173,8 @@
 					{% for product in data: %}
 					<div class="product">
 						<a href="product.html">
-							<img src="{{ url_for('static', filename='img/product/img1.jpg') }}">
+							<!-- <img src="{{ url_for('static', filename='img/product/img1.jpg') }}"> -->
+							<img src="data:image/*;base64,{{ product[6] }}">
 						</a>
 						<div class="product-detail">
 							<h3>{{ product[1] }}</h3>

@@ -5,6 +5,7 @@ from flask_session import Session
 from datetime import timedelta
 from flask_bcrypt import Bcrypt
 import products
+import base64
 app = Flask(__name__)
 
 # Configuration for hashing
@@ -37,7 +38,13 @@ def home():
             cur.execute(select_query, values)
             data = cur.fetchall()
             cur.close()
-            return render_template('index.html', data=data)
+            # Converting the ata from tuple to list for encoding the image data i.e retrieval of image
+            dataList = []
+            for row in data:
+                dataList.append(list(row))
+            for row in dataList:
+                row[6] = base64.b64encode(row[6]).decode('utf-8')
+            return render_template('index.html', data=dataList)
         else:
             # Buyer is logged in
             select_query = "SELECT * FROM product"
@@ -51,13 +58,16 @@ def home():
             cartData = cur.fetchall()
             cartDataInList = []
             for cartRow in cartData:
-                print(cartRow[0])
+                # print(cartRow[0])
                 cartDataInList.append(int(cartRow[0]))
             cur.close()
-            # print("HI")
-            # cartDataInDict = set(cartDataInList)
-            # print(cartDataInDict)
-            return render_template('index.html', data=data, cartData=cartDataInList)
+            # Converting the ata from tuple to list for encoding the image data i.e retrieval of image
+            dataList = []
+            for row in data:
+                dataList.append(list(row))
+            for row in dataList:
+                row[6] = base64.b64encode(row[6]).decode('utf-8')
+            return render_template('index.html', data=dataList, cartData=cartDataInList)
     else:
         return redirect(url_for('login'))
 
