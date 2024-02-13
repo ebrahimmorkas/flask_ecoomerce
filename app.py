@@ -29,6 +29,7 @@ Session(app)
 def home():
     if session.get('login') or session.get('vendorLogin'):
         if session.get('vendorLogin'):
+            # vendor is logged in
             vendorID = session['vendorID']
             select_query = "SELECT * FROM product WHERE vendorid = %s"
             values = (vendorID,)
@@ -38,15 +39,44 @@ def home():
             cur.close()
             return render_template('index.html', data=data)
         else:
+            # Buyer is logged in
             select_query = "SELECT * FROM product"
             cur = mysql.connection.cursor()
             cur.execute(select_query)
             data = cur.fetchall()
+            buyerid = session['buyerID']
+            select_query_for_cart = "SELECT productid FROM cart WHERE buyerid = %s"
+            values_cart = (buyerid,)
+            cur.execute(select_query_for_cart, values_cart)
+            cartData = cur.fetchall()
+            cartDataInList = []
+            for cartRow in cartData:
+                print(cartRow[0])
+                cartDataInList.append(int(cartRow[0]))
             cur.close()
-            return render_template('index.html', data=data)
+            # print("HI")
+            # cartDataInDict = set(cartDataInList)
+            # print(cartDataInDict)
+            return render_template('index.html', data=data, cartData=cartDataInList)
     else:
         return redirect(url_for('login'))
 
+# Route that will delete the product from cart
+@app.route('/deleteFromCart', methods=['POST'])
+def deleteFromCart():
+    if session.get('buyerID'):
+        if request.method == 'POST':
+            productID = request.json['productID']
+            delete_query = "DELETE FROM cart WHERE productid = %s"
+            values = (productID,)
+            cur = mysql.connection.cursor()
+            cur.execute(delete_query, values)
+            mysql.connection.commit()
+            return jsonify({"msg": "Deletion successful"})
+        else:
+            return redirect(url_for('home'))
+    else:
+        return redirect(url_for('login'))
 # Creating the route for login
 @app.route('/login')
 def login():

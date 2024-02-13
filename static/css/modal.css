@@ -26,3 +26,11 @@
 #myModal{
     visibility: hidden;
 }
+
+#modalBtnDel{
+    display: none;
+}
+
+#myModalDel{
+    visibility: hidden;
+}

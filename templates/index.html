@@ -181,7 +181,11 @@
 							{% if session.get('vendorLogin'): %}
 								<a>View My Product</a>
 							{% else: %}
-								<a onclick="addToCart({{ product[0] }})">Add to Cart</a>
+								{% if product[0] in cartData: %}
+									<a id="deleteFromCart" onclick="deleteFromCart({{ product[0] }})">Delete from Cart</a>
+								{% else: %}
+									<a id="addToCartBtn" onclick="addToCart({{ product[0] }})">Add to Cart</a>
+								{% endif %}
 								<p>{{ product[3] }}</p>
 								<center><a href="">Buy Now</a></center>
 							{% endif %}
@@ -413,8 +417,22 @@
         <p>Product Successfully added to cart</p>
     </div>
 </div>
+
+<button id="modalBtnDel" onclick="deleteModal()">Delete Modal</button>
+
+<!-- The modal -->
+<div id="myModalDel" class="overlay">
+    <div class="popup-content">
+        <!-- Modal content -->
+        <span onclick="closeDelModal()" style="cursor: pointer; float: right;">&times;</span>
+        <h2>Cart</h2>
+        <p>Product Successfully Deleted from cart</p>
+    </div>
+</div>
 	<script src="{{ url_for('static', filename='js/addToCart.js') }}"></script>
 	<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/delModal.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/deleteFromCart.js') }}"></script>
 </body>
 
 </html>
